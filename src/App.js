@@ -1,10 +1,14 @@
+import { ApolloProvider } from '@apollo/react-hooks';
 import React from 'react';
 import './App.css';
 import Routes from './routes';
+import client from './services/apolloClient';
 
 function App() {
     return (
-        <Routes />
+        <ApolloProvider client={client}>
+            <Routes />
+        </ApolloProvider>
     );
 }
 
