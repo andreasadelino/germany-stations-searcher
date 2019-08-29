@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import gql from 'graphql-tag';
-import { useQuery } from '@apollo/react-hooks';
+import { useQuery, useLazyQuery } from '@apollo/react-hooks';
 
 
 
@@ -28,17 +28,11 @@ export default function SelectAsync() {
         }
     `;
 
-    const { data, loading, error, fetchMore } = useQuery(GET_STATIONS);
+    // const { data, loading, error, fetchMore } = useQuery(GET_STATIONS);
+    const [getStations, { data, loading, error }] = useLazyQuery(GET_STATIONS);
 
     useEffect(() => {
-        fetchMore({
-            variables: { searchTerm: value },
-            updateQuery: (prev, { fetchMoreResult }) => {
-                if (!fetchMoreResult) return prev;
-                setOptions(fetchMoreResult.search.stations);
-                return options;
-            }
-        });
+        getStations({ variables: { searchTerm: value } });
 
     }, [value])
 
@@ -47,7 +41,7 @@ export default function SelectAsync() {
     }
 
     function fetchData(inputValue) {
-        console.log("input", inputValue);
+        // console.log("input", inputValue);
 
         return new Promise(resolve => {
             setTimeout(() => {
@@ -56,12 +50,22 @@ export default function SelectAsync() {
         });
     }
 
-    return <AsyncSelect
-        cacheOptions
-        isClearable
-        placeholder="Type a station..."
-        noOptionsMessage={() => "No station finded..."}
-        loadOptions={fetchData}
-        openMenuOnClick={false}
-    />
+    return (
+        <div>
+            {loading && <span className="info-loading">Carregando...</span>}
+            <div className="teste">
+                Inputvalue: {value}
+            </div>
+            <AsyncSelect
+                cacheOptions
+                isClearable
+                getOptionLabel={(option) => option.label}
+                // onInputChange={setValue}
+                placeholder="Type a station..."
+                noOptionsMessage={() => "No station finded..."}
+                loadOptions={options}
+                openMenuOnClick={false}
+            />
+        </div>
+    );
 }
