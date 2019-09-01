@@ -66,14 +66,18 @@ export default function StationSearch({ history }) {
 
             response.then(({ data }) => {
                 if (data) {
-                    callback(data.search.stations);
+                    callback(_sortStations(data.search.stations));
                 } else {
                     callback([]);
                 }
             }, ({ message }) => {
                 console.log("Server Error:", message)
             });
-        }, 1000);
+        }, 250);
+    }
+
+    function _sortStations(stations) {
+        return stations.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     function onSelect(inputValue) {
@@ -86,8 +90,7 @@ export default function StationSearch({ history }) {
 
     return (
         <Container maxWidth="sm" className="search-container">
-            <Typography variant="h5" component="h1">Germany Station Search</Typography>
-            {/* <span className="info">Germany Station Search</span> */}
+            <Typography variant="h5" component="h1">German Station Search</Typography>
             <Box className="select-async">
                 <AsyncSelect
                     cacheOptions
