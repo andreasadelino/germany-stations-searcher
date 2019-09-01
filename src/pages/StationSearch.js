@@ -1,17 +1,41 @@
-import { MenuItem, Paper } from '@material-ui/core';
-import { emphasize, makeStyles } from '@material-ui/core/styles';
-import match from 'autosuggest-highlight/match';
-import parse from 'autosuggest-highlight/parse';
-import React, { useState, useEffect } from 'react';
-import Autosuggest from 'react-autosuggest';
-import "./StationSearch.css";
-import gql from 'graphql-tag';
 import { useQuery } from '@apollo/react-hooks';
+import gql from 'graphql-tag';
+import debounce from "lodash/debounce";
+import React, { useState } from 'react';
+import AsyncSelect from 'react-select/async';
+import "./StationSearch.css";
+import { emphasize, makeStyles, useTheme } from '@material-ui/core/styles';
+import { Container, Typography, Box, Card, CardContent, CardActions, Button, Link } from '@material-ui/core';
 
 
-export default function StationSearch() {
-    const [value, setValue] = useState("");
-    const [suggestions, setSuggestions] = useState([]);
+export default function StationSearch({ history }) {
+
+    let timer = null;
+
+    const [station, setStation] = useState(null);
+
+    const useStyles = makeStyles({
+        card: {
+            minWidth: 400,
+            margin: "30px 0"
+        },
+        bullet: {
+            display: 'inline-block',
+            margin: '0 2px',
+            transform: 'scale(0.8)',
+        },
+        title: {
+            fontSize: 14,
+        },
+        stationName: {
+            fontSize: 18
+        },
+        pos: {
+            marginBottom: 12,
+        },
+    });
+
+    const classes = useStyles();
 
     const GET_STATIONS = gql`
         query stationSearch($searchTerm: String) {
@@ -20,158 +44,106 @@ export default function StationSearch() {
                         name
                         primaryEvaId
                         stationNumber
+                        federalState
+                        mailingAddress {
+                            city
+                            zipcode
+                            street
+                        }
+                        regionalArea {
+                            name
+                            shortName
+                        }                        
                 }
             }
         }
     `;
 
-    const { data, loading, error, fetchMore } = useQuery(GET_STATIONS);
+    const { refetch, loading } = useQuery(GET_STATIONS, { skip: true });
 
-    useEffect(() => {
-        fetchMore({
-            variables: { searchTerm: value },
-            updateQuery: (prev, { fetchMoreResult }) => {
-                if (!fetchMoreResult) return prev;
-                const result = {
-                    fetchMoreResult,
-                    stations: [
-                        ...prev.search.stations,
-                        ...fetchMoreResult.search.stations,
-                    ],
+    function fetchData(inputValue, callback) {
+        clearTimeout(timer);
+
+        timer = setTimeout(() => {
+            const response = refetch({ searchTerm: inputValue });
+
+            response.then(({ data }) => {
+                if (data) {
+                    callback(data.search.stations);
+                } else {
+                    callback([]);
                 }
-                // console.log(fetchMoreResult.search.stations);
-                setSuggestions(fetchMoreResult.search.stations);
-                return result;
-            }
-        });
-
-    }, [value])
-
-    const stations = [];
-
-    // Teach Autosuggest how to calculate suggestions for any given input value.
-    async function getSuggestions(value) {
-        const inputValue = value.trim().toLowerCase();
-        const inputLength = inputValue.length;
-
-        // DAR UM SETSTATE AQUI E VER O QUE DÁ.VER COMO O COMPONENTE SE COMPORTA
-        // USANDO UM METODO VOID AQUI
-        return inputLength === 0
-            ? []
-            : stations.filter(station =>
-                station.name.toLowerCase().slice(0, inputLength) === inputValue
-            );
-    };
-
-    // When suggestion is clicked, Autosuggest needs to populate the input
-    // based on the clicked suggestion. Teach Autosuggest how to calculate the
-    // input value for every given suggestion.
-    const getSuggestionValue = suggestion => {
-        return suggestion.name;
-    };
-
-    // Use your imagination to render suggestions.
-    function renderSuggestion(suggestion, { query, isHighlighted }) {
-        const matches = match(suggestion.name, query);
-        const parts = parse(suggestion.name, matches);
-
-        return (
-            <MenuItem selected={isHighlighted} component="div">
-                <div>
-                    {parts.map(part => (
-                        <span key={part.text} style={{ fontWeight: part.highlight ? 700 : 400 }}>
-                            {part.text}
-                        </span>
-                    ))}
-                </div>
-            </MenuItem>
-        );
+            }, ({ message }) => {
+                console.log("Server Error:", message)
+            });
+        }, 250);
     }
 
-    function onChange(event, { newValue, method }) {
-        setValue(newValue);
+    const debouncedLoadOptions = debounce(fetchData, 250);
+
+    function onSelect(inputValue) {
+        console.log(inputValue);
+        setStation(inputValue);
     }
 
-    // Autosuggest will call this function every time you need to update suggestions.
-    // You already implemented this logic above, so just use it.
-    function onSuggestionsFetchRequested({ value }) {
-        // getSuggestions(value);
-        // console.log(value)
-    }
-
-    // Autosuggest will call this function every time you need to clear suggestions.
-    function onSuggestionsClearRequested() {
-        setSuggestions([]);
-    }
-
-    const useStyles = makeStyles(theme => ({
-        root: {
-            height: 250,
-            flexGrow: 1,
-        },
-        container: {
-            position: 'relative',
-        },
-        suggestionsContainerOpen: {
-            position: 'absolute',
-            zIndex: 1,
-            marginTop: theme.spacing(0),
-            left: 0,
-            right: 0,
-        },
-        suggestion: {
-            display: 'block',
-        },
-        suggestionsList: {
-            margin: 0,
-            padding: 0,
-            listStyleType: 'none',
-        },
-        divider: {
-            height: theme.spacing(2),
-        },
-    }));
-
-    const classes = useStyles();
-
-    const inputProps = {
-        classes,
-        id: 'station-autosuggest',
-        label: 'Station',
-        placeholder: 'Search a station',
-        value,
-        onChange,
-    }
-
-    const autosuggestProps = {
-        suggestions: suggestions,
-        onSuggestionsFetchRequested: onSuggestionsFetchRequested,
-        onSuggestionsClearRequested: onSuggestionsClearRequested,
-        getSuggestionValue: getSuggestionValue,
-        renderSuggestion: renderSuggestion,
+    function goToDetail() {
+        // alert(station.name);
+        history.push(`station/${station.primaryEvaId}`);
     }
 
     return (
-        <div className="search-container">
-            <span className="info">Germany Station Search</span>
-            <div className="input-suggestion">
-                <Autosuggest
-                    {...autosuggestProps}
-                    inputProps={inputProps}
-                    theme={{
-                        container: classes.container,
-                        suggestionsContainerOpen: classes.suggestionsContainerOpen,
-                        suggestionsList: classes.suggestionsList,
-                        suggestion: classes.suggestion,
-                    }}
-                    renderSuggestionsContainer={options => (
-                        <Paper {...options.containerProps} square>
-                            {options.children}
-                        </Paper>
-                    )}
+        <Container maxWidth="sm" className="search-container">
+            <Typography variant="h5" component="h1">Germany Station Search</Typography>
+            {/* <span className="info">Germany Station Search</span> */}
+            <Box className="select-async">
+                <AsyncSelect
+                    cacheOptions
+                    isClearable
+                    loadingMessage={() => "Fetching stations. Please wait..."}
+                    noOptionsMessage={() => "No station finded..."}
+                    getOptionLabel={(option) => option.name}
+                    getOptionValue={(option) => option.primaryEvaId}
+                    onChange={onSelect}
+                    placeholder="Type a station..."
+                    loadOptions={debouncedLoadOptions}
+                    openMenuOnClick={false}
+                    components={
+                        {
+                            DropdownIndicator: () => null,
+                            IndicatorSeparator: () => null
+                        }
+                    }
                 />
-            </div>
-            {loading && <span className="info">Carregando...</span>}
-        </div>
-    )
+            </Box>
+
+            {/* Card */}
+            {station &&
+                <Card className={classes.card}>
+                    <CardContent>
+                        <Typography className={classes.title} color="textSecondary" gutterBottom>
+                            Station name
+                        </Typography>
+                        {/* <Typography variant="h5" component="h2"></Typography> */}
+                        <Typography className={classes.stationName} color="textPrimary" gutterBottom>
+                            {station.name}
+                        </Typography>
+
+                        <Typography className={classes.title} color="textSecondary" gutterBottom>
+                            Location
+                        </Typography>
+
+                        <Typography variant="body2" component="p" gutterBottom>
+                            {`${station.mailingAddress.city}, ${station.mailingAddress.street}`}
+                        </Typography>
+                        <Typography variant="body2" component="p" gutterBottom>
+                            {station.regionalArea.name}
+                        </Typography>
+                    </CardContent>
+                    <CardActions>
+                        <Button size="small" color="primary" onClick={goToDetail}>More details</Button>
+                    </CardActions>
+                </Card>
+            }
+        </Container>
+    );
 }

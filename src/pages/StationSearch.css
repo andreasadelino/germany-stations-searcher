@@ -3,14 +3,16 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    margin-top: 50px;
 }
 
 .search-container .info {
     font-size: 18px;
 }
 
-.input-suggestion {
+.select-async {
     margin-top: 10px;
+    width: 400px;
 }
 
 .search-container input {

@@ -8,8 +8,8 @@ export default function Routes() {
     return (
         <BrowserRouter>
             <Route path="/" exact component={StationSearch} />
-            <Route path="/:stationNumber" exact component={StationDetail} />
-            <Route path="/select" exact component={SelectAsync} />
+            <Route path="/station/:stationNumber" component={StationDetail} />
+            <Route path="/select/comp" component={SelectAsync} />
         </BrowserRouter>
     );
 }
