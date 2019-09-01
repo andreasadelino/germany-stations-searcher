@@ -1,19 +1,16 @@
 import { useQuery } from '@apollo/react-hooks';
+import { Box, Button, Card, CardActions, CardContent, Container, Typography } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import gql from 'graphql-tag';
-import debounce from "lodash/debounce";
 import React, { useState } from 'react';
 import AsyncSelect from 'react-select/async';
 import "./StationSearch.css";
-import { emphasize, makeStyles, useTheme } from '@material-ui/core/styles';
-import { Container, Typography, Box, Card, CardContent, CardActions, Button, Link } from '@material-ui/core';
 
 
 export default function StationSearch({ history }) {
 
     let timer = null;
-
     const [station, setStation] = useState(null);
-
     const useStyles = makeStyles({
         card: {
             minWidth: 400,
@@ -76,18 +73,14 @@ export default function StationSearch({ history }) {
             }, ({ message }) => {
                 console.log("Server Error:", message)
             });
-        }, 250);
+        }, 1000);
     }
 
-    const debouncedLoadOptions = debounce(fetchData, 250);
-
     function onSelect(inputValue) {
-        console.log(inputValue);
         setStation(inputValue);
     }
 
     function goToDetail() {
-        // alert(station.name);
         history.push(`station/${station.primaryEvaId}`);
     }
 
@@ -105,7 +98,7 @@ export default function StationSearch({ history }) {
                     getOptionValue={(option) => option.primaryEvaId}
                     onChange={onSelect}
                     placeholder="Type a station..."
-                    loadOptions={debouncedLoadOptions}
+                    loadOptions={fetchData}
                     openMenuOnClick={false}
                     components={
                         {
