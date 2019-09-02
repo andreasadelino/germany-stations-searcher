@@ -5,6 +5,7 @@
   "proxy": "https://bahnql.herokuapp.com",
   "dependencies": {
     "@material-ui/core": "^4.3.3",
+    "@material-ui/icons": "^4.2.1",
     "apollo-cache-inmemory": "^1.6.3",
     "apollo-client": "^2.6.4",
     "apollo-link-http": "^1.5.15",
@@ -15,9 +16,11 @@
     "react-apollo": "^3.0.1",
     "react-autosuggest": "^9.4.3",
     "react-dom": "^16.9.0",
+    "react-redux": "^7.1.1",
     "react-router-dom": "^5.0.1",
     "react-scripts": "3.1.1",
     "react-select": "^3.0.4",
+    "redux": "^4.0.4",
     "typeface-roboto": "^0.0.75"
   },
   "scripts": {

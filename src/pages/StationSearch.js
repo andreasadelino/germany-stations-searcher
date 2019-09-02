@@ -1,13 +1,14 @@
 import { useQuery } from '@apollo/react-hooks';
-import { Box, Button, Card, CardActions, CardContent, Container, Typography } from '@material-ui/core';
+import { Box, Button, Card, CardActions, CardContent, Container, Typography, Link, List, ListItem, ListItemText } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
+import { connect } from "react-redux";
 import AsyncSelect from 'react-select/async';
 import "./StationSearch.css";
 
 
-export default function StationSearch({ history }) {
+function StationSearch({ history, stations, dispatch }) {
 
     let timer = null;
     const [station, setStation] = useState(null);
@@ -30,6 +31,9 @@ export default function StationSearch({ history }) {
         pos: {
             marginBottom: 12,
         },
+        goToDetail: {
+            cursor: "pointer"
+        }
     });
 
     const classes = useStyles();
@@ -80,12 +84,24 @@ export default function StationSearch({ history }) {
         return stations.sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    function onSelect(inputValue) {
-        setStation(inputValue);
+    function onSelect(inputValue, action) {
+        if (action.action === "select-option") {
+            setStation(inputValue);
+        } else {
+            setStation(null);
+        }
     }
 
-    function goToDetail() {
+    function goToDetail(station) {
+        dispatch(addStation(station));
         history.push(`station/${station.primaryEvaId}`);
+    }
+
+    function addStation(station) {
+        return {
+            type: "SAVE_STATION_SEARCH",
+            station
+        };
     }
 
     return (
@@ -112,7 +128,6 @@ export default function StationSearch({ history }) {
                 />
             </Box>
 
-            {/* Card */}
             {station &&
                 <Card className={classes.card}>
                     <CardContent>
@@ -136,10 +151,29 @@ export default function StationSearch({ history }) {
                         </Typography>
                     </CardContent>
                     <CardActions>
-                        <Button size="small" color="primary" onClick={goToDetail}>More details</Button>
+                        <Button size="small" color="primary" onClick={() => goToDetail(station)}>More details</Button>
                     </CardActions>
                 </Card>
             }
+
+            {stations.length > 0 &&
+                <Box>
+                    Previous :
+                    <List>
+                        {stations.map(previousSearchedStation => (
+                            <ListItem
+                                key={previousSearchedStation.primaryEvaId}
+                                alignItems="flex-start">
+                                <ListItemText
+                                    onClick={() => goToDetail(previousSearchedStation)} >
+                                    {previousSearchedStation.name}
+                                </ListItemText>
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>}
         </Container>
     );
 }
+
+export default connect(state => ({ stations: state }))(StationSearch);
