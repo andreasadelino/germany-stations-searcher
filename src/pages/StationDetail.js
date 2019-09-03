@@ -13,6 +13,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import "./StationDetail.css"
 import { classes } from 'istanbul-lib-coverage';
+import { STATION_DETAIL } from '../queries';
 
 export default function StationDetail({ match, history }) {
 
@@ -25,37 +26,6 @@ export default function StationDetail({ match, history }) {
     }));
 
     const classes = useStyles();
-
-    const STATION_DETAIL = gql`
-        query stationById($evaId: Int!) {
-            stationWithEvaId(evaId: $evaId) {
-                primaryEvaId
-                name
-                stationNumber
-                hasParking
-                hasBicycleParking
-                hasLocalPublicTransport
-                hasWiFi
-                hasCarRental
-                picture {
-                    url
-                }
-                location {
-                    latitude
-                    longitude
-                }
-                mailingAddress {
-                    city
-                    zipcode
-                    street
-                }
-                regionalArea {
-                    name
-                    shortName
-                }
-            }
-        }
-    `;
 
     const { data, loading } = useQuery(STATION_DETAIL, {
         variables: {
